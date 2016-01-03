@@ -1,0 +1,294 @@
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Untitled Document</title>
+  <link rel="stylesheet" type="text/css" href="jquery-css.css">
+  <script src="jquery-1.7.1.min.js"></script>
+  <script src="jquery-ui 1.10.2.js"></script>
+</head>
+<style>
+  #prog_percent {
+    width: 200px;
+    height: 10px;
+    margin: 50px auto;
+    display: block;
+  }
+  #pbar {
+    width: 400px;
+    height: 14px;
+    margin: 50px auto;
+    display: block;
+    border: none;
+    color: green;
+    -webkit-appearance: none;
+  }
+  ol:nth-child(even) {
+    background-color: #f2f2f2;
+  }
+  p {
+    background-color: pink;
+  }
+  body {
+    background-color: CornflowerBlue;
+  }
+  h1,h3 {
+    text-align: center;
+  }
+  li:hover {
+    color: red;
+  }
+</style>
+
+<script>
+  var queArray = [];
+  var ansArray = [];
+  var queFlag = false;
+  var ansFlag = false;
+  var exist_que = [];
+  var retrieve = [], oldjson;
+  //Get call from json
+  $.getJSON('data.json', function(info) {
+    queArray = info.records;
+    oldjson = info.records.length;
+	console.log("old json length : " + oldjson);
+    retrieve = JSON.parse(localStorage.getItem("newdata"));
+	
+    if (retrieve != null) {
+      for (var i = 0; i < retrieve.length; i++) {
+        queArray.push({
+		  que: retrieve[i].que,
+          op1: retrieve[i].op1,
+          op2: retrieve[i].op2,
+          op3: retrieve[i].op3,
+          op4: retrieve[i].op4,
+          correctAns: retrieve[i].correctAns
+        });
+      }
+    }
+    console.log("new length : " + queArray.length);
+
+    var htmlData = "";
+    for (var i = 0; i < queArray.length; i++) {
+      htmlData += '<div id="qna"style="padding-center-left: 20px;">';
+      htmlData += '<div id="que" >';
+      htmlData += '<p>' + queArray[i].que + '</p>';
+      htmlData += '</div>'
+      htmlData += '<ol>'
+      htmlData += '<li><input type="radio" name="radio' + (i + 1) + '"  id="radios" value="A" onclick="updateProgressBar(' + (i + 1) + ', ' + queArray[i].op1 +
+        ')" required>' + queArray[i].op1 + '</li>'
+      htmlData += '<li><input type="radio" name="radio' + (i + 1) + '"  id="radios" value="B" onclick="updateProgressBar(' + (i + 1) + ', ' + queArray[i].op2 +
+        ')" required>' + queArray[i].op2 + '</li>'
+      htmlData += '<li><input type="radio" name="radio' + (i + 1) + '"  id="radios" value="C" onclick="updateProgressBar(' + (i + 1) + ', ' + queArray[i].op3 +
+        ')" required>' + queArray[i].op3 + '</li>'
+      htmlData += '<li><input type="radio" name="radio' + (i + 1) + '"  id="radios" value="D" onclick="updateProgressBar(' + (i + 1) + ', ' + queArray[i].op4 +
+        ')" required>' + queArray[i].op4 + '</li>'
+      htmlData += '</ol>'
+      htmlData += '</div>'
+    }
+    document.getElementById("test").innerHTML = htmlData;
+	if(queArray.length > oldjson){
+		$("#removeQue").show();
+	}
+	else{
+		$("#removeQue").hide();
+	}
+  });
+  
+
+  // Update progressBar
+  function updateProgressBar(qIndex, selectedOp) {
+    console.log(qIndex + ":" + selectedOp);
+    var progressBar = document.getElementById('pBar');
+    for (var i = 0; i < ansArray.length; i++) {
+      if (qIndex == ansArray[i].queNo) {
+        console.log("Match Found");
+        queFlag = true;
+        break;
+      } else {
+        queFlag = false;
+      }
+    }
+    for (var i = 0; i < ansArray.length; i++) {
+      if (selectedOp != ansArray[i].ans) {
+        ansFlag = true;
+        break;
+      } else {
+        ansFlag = false;
+      }
+    }
+    arrIndex = 0;
+		if(queFlag == true) {
+			if(ansFlag == true) {
+				for(var i=0; i < ansArray.length; i++) {
+					if(ansArray[i].queNo == qIndex) {
+						arrIndex = i;
+					}
+				}
+				ansArray[arrIndex].ans = selectedOp;
+			} else {
+				console.log("Same Answer Selected"); 
+			}
+		} else {
+			ansArray.push({
+				queNo: qIndex,
+				ans: selectedOp
+			});
+      progressBar.value = (ansArray.length / queArray.length) * 100;
+      var prog_percent = Math.ceil((ansArray.length / queArray.length) * 100);
+      document.getElementById("prog_percent").innerHTML = "Completed : " + prog_percent;
+    }
+    for (var i = 0; i < ansArray.length; i++) {
+      console.log("Answer Array: " + ansArray[i].queNo + ":" + ansArray[i].ans);
+    }
+  }
+  // check answer 
+  function checkans() {
+    var count = 0;
+    var wrongQueNo = [];
+    for (var i = 0; i < ansArray.length; i++) {
+      if (ansArray[i].ans == queArray[ansArray[i].queNo - 1].correctAns) {
+        count++;
+      } else {
+        wrongQueNo.push("Q." + ansArray[i].queNo);
+      }
+    }
+    alert("You have scored " + count + " out of " + queArray.length);
+  }
+  // Dialog function 
+  $(function() {
+    $("#dialog").dialog({
+      closeOnEscape: false,
+      autoOpen: false,
+      height: 310,
+      width: 500,
+      position: {
+        my: "center",
+        at: "top"
+      }
+    });
+    $("#opener").click(function() {
+      $("#dialog").dialog("open");
+    });
+  });
+  //Add Question to localStorage
+  function addquestion() {
+    // Adding Question to Array
+    exist_que = JSON.parse(localStorage.getItem("newdata"));
+    if (exist_que == null) exist_que = [];
+    var ques = document.getElementById("ques").value;
+    var option1 = document.getElementById("opt1").value;
+    var option2 = document.getElementById("opt2").value;
+    var option3 = document.getElementById("opt3").value;
+    var option4 = document.getElementById("opt4").value;
+    var ryt = document.getElementById("corr").value;
+    exist_que.push({
+	  queNo: (queArray.length + 1),
+      que: ques,
+      op1: option1,
+      op2: option2,
+      op3: option3,
+      op4: option4,
+      correctAns: ryt
+    });
+	console.log("exist_que" + exist_que.length);
+    localStorage.setItem("newdata", JSON.stringify(exist_que));
+    alert("Question Added Successfully...");
+
+    // Assign Value to Progress Bar
+    progressBar = Math.ceil((ansArray.length / queArray.length) * 100);
+    window.location.reload();
+  }
+  
+
+  // Remove question from localStorage
+  function Remove(removeindex) {
+    console.log("position :" + removeindex);
+	  queArray.splice(removeindex+1, 1);
+	  
+	  var quearr = JSON.parse(localStorage.getItem("newdata"));
+	  var newindex = null;
+	  
+	  for(var i=0; i < quearr.length; i++) {
+	  console.log(removeindex+1 + ":" + quearr[i].queNo);
+		if(removeindex+1 == quearr[i].queNo){
+			newindex = i;
+			break;
+		}
+	  }
+	  if(newindex != null) {
+		console.log("newindex : "+ newindex);
+		quearr.splice(newindex, 1);
+	  }
+	  var arrlength = oldjson + 1;
+	  console.log(arrlength);
+	  for(var i=0; i < quearr.length; i++) {
+		console.log("inside for: " + arrlength);
+		quearr[i].queNo = arrlength;
+		arrlength++;
+	  }
+	  localStorage.setItem("newdata", JSON.stringify(quearr));
+	  window.location.reload();
+  }
+</script>
+
+<body>
+  <h1> Welcome to Quiz </h1>
+  <h3> Your Progress </h3>
+  <progress id="pBar" value="0" max="100" style="width:400px;">
+  </progress>
+  <div id="prog_percent"></div>
+  <form role="form" name="queAnsForm" onsubmit="return checkans();">
+    <div id="test">
+    </div>
+    <input type="button" id="opener" value="Add Question">
+    <input type="button" value="Reset" onclick="window.location.reload();">
+    <input type="submit" value="Submit">
+    <input type="button" value="Remove" onclick="Remove(7)" id="removeQue">
+    <button id="clear" onclick="localStorage.clear(); window.location.reload();"> Clear </button>
+  </form>
+  <div id="dialog">
+    <table>
+      <tr>
+        <td>Enter Question</td>
+        <td>
+          <input type="textarea" rows="3" col="100" id="ques" required> </td>
+      </tr>
+      <tr>
+        <td>Option 1</td>
+        <td>
+          <input type="text" name="Option1" id="opt1" required>
+        </td>
+      </tr>
+      <tr>
+        <td>Option 2</td>
+        <td>
+          <input type="text" name="Option2" id="opt2" required>
+        </td>
+      </tr>
+      <tr>
+        <td>Option 3</td>
+        <td>
+          <input type="text" name="Option3" id="opt3" required>
+        </td>
+      </tr>
+      <tr>
+        <td>Option 4</td>
+        <td>
+          <input type="text" name="Option4" id="opt4" required>
+        </td>
+      </tr>
+      <tr>
+        <td>Correct Answer</td>
+        <td>
+          <input type="text" name="correctAns" id="corr" required>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <input type="button" value="Add" onclick="addquestion()">
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>
