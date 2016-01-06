@@ -50,13 +50,13 @@
   $.getJSON('data.json', function(info) {
     queArray = info.records;
     oldjson = info.records.length;
-	console.log("old json length : " + oldjson);
+  console.log("old json length : " + oldjson);
     retrieve = JSON.parse(localStorage.getItem("newdata"));
-	
+  
     if (retrieve != null) {
       for (var i = 0; i < retrieve.length; i++) {
         queArray.push({
-		  que: retrieve[i].que,
+      que: retrieve[i].que,
           op1: retrieve[i].op1,
           op2: retrieve[i].op2,
           op3: retrieve[i].op3,
@@ -66,12 +66,11 @@
       }
     }
     console.log("new length : " + queArray.length);
-
     var htmlData = "";
     for (var i = 0; i < queArray.length; i++) {
       htmlData += '<div id="qna"style="padding-center-left: 20px;">';
       htmlData += '<div id="que" >';
-      htmlData += '<p>' + queArray[i].que + '</p>';
+      htmlData += '<p> Question No :' + (i+1) + ') ' + queArray[i].que + '</p>';
       htmlData += '</div>'
       htmlData += '<ol>'
       htmlData += '<li><input type="radio" name="radio' + (i + 1) + '"  id="radios" value="A" onclick="updateProgressBar(' + (i + 1) + ', ' + queArray[i].op1 +
@@ -86,19 +85,19 @@
       htmlData += '</div>'
     }
     document.getElementById("test").innerHTML = htmlData;
-	if(queArray.length > oldjson){
-		$("#removeQue").show();
-	}
-	else{
-		$("#removeQue").hide();
-	}
+  if(queArray.length > oldjson){
+    $("#removeQue").show();
+  }
+  else{
+    $("#removeQue").hide();
+  }
   });
   
-
   // Update progressBar
   function updateProgressBar(qIndex, selectedOp) {
     console.log(qIndex + ":" + selectedOp);
     var progressBar = document.getElementById('pBar');
+    // check if already answered
     for (var i = 0; i < ansArray.length; i++) {
       if (qIndex == ansArray[i].queNo) {
         console.log("Match Found");
@@ -108,6 +107,7 @@
         queFlag = false;
       }
     }
+    //check if change in answer
     for (var i = 0; i < ansArray.length; i++) {
       if (selectedOp != ansArray[i].ans) {
         ansFlag = true;
@@ -116,23 +116,24 @@
         ansFlag = false;
       }
     }
+    // update the array
     arrIndex = 0;
-		if(queFlag == true) {
-			if(ansFlag == true) {
-				for(var i=0; i < ansArray.length; i++) {
-					if(ansArray[i].queNo == qIndex) {
-						arrIndex = i;
-					}
-				}
-				ansArray[arrIndex].ans = selectedOp;
-			} else {
-				console.log("Same Answer Selected"); 
-			}
-		} else {
-			ansArray.push({
-				queNo: qIndex,
-				ans: selectedOp
-			});
+    if(queFlag == true) {
+      if(ansFlag == true) {
+        for(var i=0; i < ansArray.length; i++) {
+          if(ansArray[i].queNo == qIndex) {
+            arrIndex = i;
+          }
+        }
+        ansArray[arrIndex].ans = selectedOp;
+      } else {
+        console.log("Same Answer Selected"); 
+      }
+    } else {
+      ansArray.push({
+        queNo: qIndex,
+        ans: selectedOp
+      });
       progressBar.value = (ansArray.length / queArray.length) * 100;
       var prog_percent = Math.ceil((ansArray.length / queArray.length) * 100);
       document.getElementById("prog_percent").innerHTML = "Completed : " + prog_percent;
@@ -182,7 +183,7 @@
     var option4 = document.getElementById("opt4").value;
     var ryt = document.getElementById("corr").value;
     exist_que.push({
-	  queNo: (queArray.length + 1),
+    queNo: (queArray.length + 1),
       que: ques,
       op1: option1,
       op2: option2,
@@ -190,45 +191,58 @@
       op4: option4,
       correctAns: ryt
     });
-	console.log("exist_que" + exist_que.length);
+  console.log("exist_que" + exist_que.length);
     localStorage.setItem("newdata", JSON.stringify(exist_que));
     alert("Question Added Successfully...");
-
     // Assign Value to Progress Bar
     progressBar = Math.ceil((ansArray.length / queArray.length) * 100);
     window.location.reload();
-  }
+ }
   
+// Remove question from localStorage
+   function Remove() {
+      $("#test").hide();
+      retrieve = JSON.parse(localStorage.getItem("newdata"));
+      if (retrieve  != null )
+      { 
+      var htmlData = "";
+      for (var i = 0; i < retrieve.length; i++) {
+      htmlData += '<div id="existqna" style="padding-center-left: 20px;">';
+      htmlData += '<div id="que" >';
+      htmlData += '<p>Question No :' + (oldjson+i+1) + ') ' + retrieve[i].que + '<input type = "button" id="rmv" onclick="removethis('+i+')" value="Remove this" style="float: left;"></p>';
+      htmlData += '</div>'
+      htmlData += '<ol>'
+      htmlData += '<li><input type="radio" name="radio' + (i + 1) + '"  id="radios" value="A" >' + retrieve[i].op1 + '</li>'
+      htmlData += '<li><input type="radio" name="radio' + (i + 1) + '"  id="radios" value="B" >' + retrieve[i].op2 + '</li>'
+      htmlData += '<li><input type="radio" name="radio' + (i + 1) + '"  id="radios" value="C" >' + retrieve[i].op3 + '</li>'
+      htmlData += '<li><input type="radio" name="radio' + (i + 1) + '"  id="radios" value="D" >' + retrieve[i].op4 + '</li>'
+      htmlData += '</ol>'
+      htmlData += '</div>'
+   }
+    htmlData += '<input type="button" value="Done" onclick="complete()" id="done">'
+    }
 
-  // Remove question from localStorage
-  function Remove(removeindex) {
-    console.log("position :" + removeindex);
-	  queArray.splice(removeindex+1, 1);
-	  
-	  var quearr = JSON.parse(localStorage.getItem("newdata"));
-	  var newindex = null;
-	  
-	  for(var i=0; i < quearr.length; i++) {
-	  console.log(removeindex+1 + ":" + quearr[i].queNo);
-		if(removeindex+1 == quearr[i].queNo){
-			newindex = i;
-			break;
-		}
-	  }
-	  if(newindex != null) {
-		console.log("newindex : "+ newindex);
-		quearr.splice(newindex, 1);
-	  }
-	  var arrlength = oldjson + 1;
-	  console.log(arrlength);
-	  for(var i=0; i < quearr.length; i++) {
-		console.log("inside for: " + arrlength);
-		quearr[i].queNo = arrlength;
-		arrlength++;
-	  }
-	  localStorage.setItem("newdata", JSON.stringify(quearr));
-	  window.location.reload();
+    document.getElementById("exist_test").innerHTML = htmlData;
+    $("#exist_test").show();
+    $("#opener, #sub, #removeQue, #reset, #clear").hide();
   }
+
+function complete(){
+  $("#test, #opener, #sub, #removeQue, #reset, #clear").show();
+  $("#exist_test, #done, #rmv").hide();
+  window.location.reload();
+}
+
+   function removethis(rindex){
+    var abc = JSON.parse(localStorage.getItem("newdata"));
+    for (var i = 0; i < abc.length; i++) {
+    abc.splice(rindex, 1);
+    localStorage.setItem("newdata", JSON.stringify(abc));
+    alert("removed");
+	window.location.reload();
+    break;
+    }    
+}
 </script>
 
 <body>
@@ -240,10 +254,12 @@
   <form role="form" name="queAnsForm" onsubmit="return checkans();">
     <div id="test">
     </div>
+    <div id="exist_test">
+    </div>
     <input type="button" id="opener" value="Add Question">
-    <input type="button" value="Reset" onclick="window.location.reload();">
-    <input type="submit" value="Submit">
-    <input type="button" value="Remove" onclick="Remove(7)" id="removeQue">
+    <input type="button" value="Reset" onclick="window.location.reload();" id="reset">
+    <input type="submit" value="Submit" id="sub">
+    <input type="button" value="Remove" onclick="Remove()" id="removeQue">
     <button id="clear" onclick="localStorage.clear(); window.location.reload();"> Clear </button>
   </form>
   <div id="dialog">
